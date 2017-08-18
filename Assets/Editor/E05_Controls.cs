@@ -19,16 +19,17 @@ namespace UIElementsExamples
         [SerializeField]
         List<string> m_Tasks;
 
-        TextField m_TextField;
+        DoubleField m_TextField;
         ScrollView m_TasksContainer;
+        Button m_Button;
 
         public void AddTaskOnReturnKey(KeyDownEvent e)
         {
-            if (e.keyCode == KeyCode.Return)
+            if (e.character == '\n')
             {
+                m_TextField.UpdateValueFromText();
                 AddTask();
-                // Prevent the text field from handling this key.
-                e.StopPropagation();
+                e.PreventDefault();
             }
         }
 
@@ -37,51 +38,77 @@ namespace UIElementsExamples
             var root = this.GetRootVisualContainer();
             root.AddStyleSheetPath("todolist");
 
-            m_TextField = new TextField() { name = "input" };
-            root.AddChild(m_TextField);
+            Label l = new Label("Task name");
+            root.Add(l);
+            m_TextField = new DoubleField() { name = "input" };
+            m_TextField.SetDragZone(l);
+            root.Add(m_TextField);
             m_TextField.RegisterCallback<KeyDownEvent>(AddTaskOnReturnKey);
 
-            var button = new Button(AddTask) { text = "Save task" };
-            root.AddChild(button);
+            m_Button = new Button(AddTask) { text = "Save task" };
+            root.Add(m_Button);
+
+            m_TextField.RegisterCallback<InputEvent>(OnInput);
+            m_TextField.OnChange(OnChange);
 
             m_TasksContainer = new ScrollView();
             m_TasksContainer.showHorizontal = false;
-            root.AddChild(m_TasksContainer);
+            root.Add(m_TasksContainer);
 
             if (m_Tasks != null)
             {
                 foreach(string task in m_Tasks)
                 {
-                    m_TasksContainer.contentView.AddChild(CreateTask(task));
+                    m_TasksContainer.contentContainer.Add(CreateTask(task));
                 }
             }
         }
+        void OnInput(InputEvent evt)
+        {
+            m_Button.text += ".";
+        }
 
-        public void DeleteTask(KeyDownEvent e, VisualContainer task)
+        void OnChange(ChangeEvent<double> evt)
+        {
+            if (evt.newValue > evt.previousValue)
+            {
+                m_Button.text = "Save bigger task";
+            }
+            else if (evt.newValue < evt.previousValue)
+            {
+                m_Button.text = "Save smaller task";
+            }
+            else
+            {
+                m_Button.text = "Save task";
+            }
+        }
+
+        public void DeleteTask(KeyDownEvent e, VisualElement task)
         {
             if (e.keyCode == KeyCode.Delete)
             {
                 if (task != null)
                 {
-                    task.parent.RemoveChild(task);
+                    task.parent.Remove(task);
                 }
             }
         }
 
-        public VisualContainer CreateTask(string name)
+        public VisualElement CreateTask(string name)
         {
-            var task = new VisualContainer();
+            var task = new VisualElement();
             task.focusIndex = 0;
             task.name = name;
             task.AddToClassList("task");
 
-            task.RegisterCallback<KeyDownEvent, VisualContainer>(DeleteTask, task);
+            task.RegisterCallback<KeyDownEvent, VisualElement>(DeleteTask, task);
 
             var taskName = new Toggle(() => {}) { text = name, name = "checkbox" };
-            task.AddChild(taskName);
+            task.Add(taskName);
 
-            var taskDelete = new Button(() => task.parent.RemoveChild(task)) { name = "delete", text = "Delete" };
-            task.AddChild(taskDelete);
+            var taskDelete = new Button(() => task.parent.Remove(task)) { name = "delete", text = "Delete" };
+            task.Add(taskDelete);
 
             return task;
         }
@@ -89,7 +116,7 @@ namespace UIElementsExamples
         public void OnDisable()
         {
             m_Tasks = new List<string>();
-            foreach(VisualContainer task in m_TasksContainer)
+            foreach(VisualElement task in m_TasksContainer)
             {
                 m_Tasks.Add(task.name);
             }
@@ -99,7 +126,7 @@ namespace UIElementsExamples
         {
             if (!string.IsNullOrEmpty(m_TextField.text))
             {
-                m_TasksContainer.contentView.AddChild(CreateTask(m_TextField.text));
+                m_TasksContainer.contentContainer.Add(CreateTask(m_TextField.text));
                 m_TextField.text = "";
 
                 // Give focus back to text field.

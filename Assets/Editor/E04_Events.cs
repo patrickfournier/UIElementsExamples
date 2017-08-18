@@ -19,7 +19,7 @@ namespace UIElementsExamples
         {
             var root = this.GetRootVisualContainer();
             root.AddManipulator(new MouseEventLogger());
-            root.AddChild(new VisualElement() { style = { backgroundColor = Color.red }, text = "Click me"});
+            root.Add(new VisualElement() { style = { backgroundColor = Color.red }, text = "Click me"});
         }
 
         class MouseEventLogger : Manipulator
@@ -42,7 +42,7 @@ namespace UIElementsExamples
                 target.UnregisterCallback<MouseDownEvent>(OnMouseEvent, Capture.Capture);
             }
 
-            void OnMouseEvent(MouseEventBase evt)
+            void OnMouseEvent(EventBase evt)
             {
                 Debug.Log("Receiving " + evt + " in " + evt.propagationPhase + " for target " + evt.target);
             }
