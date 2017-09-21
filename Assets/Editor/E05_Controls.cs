@@ -41,7 +41,8 @@ namespace UIElementsExamples
             Label l = new Label("Task name");
             root.Add(l);
             m_TextField = new DoubleField() { name = "input" };
-            m_TextField.SetDragZone(l);
+            var dragger = new FieldMouseDragger<double>(m_TextField);
+            dragger.SetDragZone(l);
             root.Add(m_TextField);
             m_TextField.RegisterCallback<KeyDownEvent>(AddTaskOnReturnKey);
 
